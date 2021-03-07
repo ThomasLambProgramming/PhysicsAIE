@@ -1,0 +1,2 @@
+C:\Users\Mcsor\Desktop\PhysicsAIE\temp\PhysicsProject\x64\Debug\PhysicsProject.exe
+C:\Users\Mcsor\Desktop\PhysicsAIE\temp\PhysicsProject\x64\Debug\PhysicsProject.pdb
