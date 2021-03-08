@@ -1,0 +1,125 @@
+Sphere to sphere
+	if distance between 2 centers - both radius + together and if negative then collide = true
+sphere to plane
+	d = (SphereCenter dot PlaneNormal) - planeToOrigin - sphereRadius
+	if d = negative then has collided
+sphere to box
+	we first want to find the closest point from the box to the sphere
+	we do this by converting the circles position to the coordinate space of the box
+	then we clamp the circles position to the boxs extents in both x and y then convert back into world coordinates
+	
+	transform the circle into the boxes coordinate space
+		worldDifference = spherepos - boxpos
+		circleBoxWorld = vec2(dot(worlddiff, boxLocalX) Dot(worlddiff, boxLocalY)
+		now we find the closest point to the cfircle center on the box by clamping the coordingates in box space to the boxs extents
+
+		we make seperate vec2s so the clamp values are seperate
+		vec2 ClosestPointonBoxBox = circleBoxWorld
+		vec2 extents = boxExtents;
+
+		if (clostestPoint.x < -extents.x) 
+			closeestPoint.x = extents.x
+		if (closestPoint.x > extents.x
+			closestpoint.x = extents.x
+		same for y
+		//i think here is if its already beyond the scope of the box then clamp it to the x most and y most positions (corners)
+
+		convert back to world space
+		closestpointonboxworld = boxPos + closestpoint.x * boxLocalX + clostestpoint.y * boxlocalY
+		
+		get the distance vector from the closest point to the sphere center
+		circle to box = spherePos - closestpointonboxworld
+		if distance < radius
+		direction = distanceVector normalized
+		contact is the closest point
+		ResolveCollision(sphere, contact, direction)
+
+
+box to plane 
+	Gets number of contacts int
+	Where the contact point is (or the average of the points)
+	contact velocity
+	
+	get a point on plane (normal * distance)
+	check the 4 points
+	for each point
+	{
+		get the world space position (center + x * localX + y * localY)
+		get the distance away from the plane
+			Project the vector of difference (vec2 - vec2) by the plane normal
+		get the displacement from the boxcenter to the corner
+			x * localx + y * localy
+		get the points velocity 
+			velocity + angularvelocity * vec2(-displacementY, displacementX) (perpindulcar)
+		get the distance of the velocity into the plane 
+			dot pointsvelocity, planenormal
+		if (the distance from the plane is < 0 and the velocity into the plane is <= 0)
+			then we have contacted
+		as the dot product is negative as vectors are opposite if both are negative then it is opposite
+		the plane normal and we know the distance so we know if the velocity will make the box leave
+		or if the boxs position is already in the plane 
+	}
+	
+box to box 
+	loop over each corner
+	get the location of the other boxes corner in world space
+		getpos + a * localX + y * localy
+	get the position of the otherboxcorner in our boxes world space 
+		dot(worldSpace - position, localX), dot(worldspace - position, localY)  This is a vec2
+	
+	if its the first iteration update all the extents in each cardinal direction
+	foreach corner loop
+	if (first || otherBoxSpace.x < minX) minX = otherBoxSpace.x
+	if (first || otherBoxSpace.x < maxX) maxX = otherBoxSpace.x
+	if (first || otherBoxSpace.y < minY) minY = otherBoxSpace.Y
+	if (first || otherBoxSpace.y < maxy) maxY = otherBoxSpace.Y
+	
+	
+	
+
+
+
+Box stuff
+	made from center point (rigidbody) and vec2 of half lengths of the box 
+		= m_extents
+	
+	Box also has a vec2 localX and localY (2 vec2s not one)
+	
+	fixed update = gets the cos and sin of the rotation then
+	m_localX = glm::normalize(glm::vec2(cs, sn));
+	m_localY = glm::normalize(glm::vec2(-sn, cs));
+
+	draws bby getting pos -+ localx * extents.x - localy * extents.y
+	then does that for all 4 corners
+	
+
+
+
+
+
+Resolutions
+	Plane
+		Get the local contact point (where the force will be applied)
+		contact - rigidbodies positon (center of mass)
+		
+		Get actors relative velocity
+			vel + angVel * (-localContact.y, localContact.x) (perp vector of the local contact point)
+		get the velocity into the plane 
+			from the dot product of relative vel and the planes normal
+		get the perpendicular distance for the application of torqe from the center of mass
+			dot(local contact and normal.y, -normal.x)
+		Get the effective mass which is a combination of moment of inertia and mass, tells how much the contact point velocity will change with the force we are applying
+			mass = 1.0f/ (1.0f/actorGetMass + (perpdis^ * perpdis) / actorMoment)
+		get the impulse force amount
+			-(1 + elasticity) * velocityIntoPlane * effectivemass
+		get the force to apply
+			m_normal * j
+		apply force(force, contactPoint(argument) - actorGetPos)
+	
+		We have to find the effectivemass of the box as applying force in different locations of the box will require less force to move
+		as in if we hit the box at a corner it requires less force as it will rotate more, but if we hit it in the center it needs more force
+		as it will have to move most of the boxes mass (because almost no rotation)
+
+	Rigidbody	
+		
+

@@ -310,6 +310,7 @@ bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		int numContacts = 0;
 
 		box1->CheckBoxCorners(*box2, contact, numContacts, pen, norm);
+
 		if (box2->CheckBoxCorners(*box1, contact, numContacts, pen, norm))
 		{
 			norm = -norm;
