@@ -74,9 +74,34 @@ box to box
 	if (first || otherBoxSpace.y < minY) minY = otherBoxSpace.Y
 	if (first || otherBoxSpace.y < maxy) maxY = otherBoxSpace.Y
 	
-	
-	
+	this gets the position of the 4 corners of the 2nd box in the context of the first box
+	we then check if the boxs corner is in the boxs extent range (check if inside)
+	if it is in range then number of contacts ++ and the local contact vec 2 += pointPos
 
+	we then check if the maxPos is on one side and if it is then we can return false
+	maxX <= -extents.x || maxX >= extents.x and same for y
+
+	if the number of contacts is 0 = then return false
+
+	if all has passed so far then we get the contact point 
+		position + (localContact.x * localX + localContact.y *localy) / numContacts
+		num contacts++
+	
+	we then test all the extents by the mins and maxs to find the minimum penetration vector
+	as a penetration amount and normal
+	we do this by checking to see if the pen is greater then 0 and the pen is less than the last recorded penetration
+	if it is, the edgenormal is localX or -localX depending on the corner being the max or the min it has to face the opposite way
+	and then the same is checked for the y axis as well
+	we then return the result which will be true if any of the penetration checks are true
+	
+	for the actual boxtoBox function 
+		we get a vector2 for the normal, and contact point
+		a float for the amount of penetration and the number of contacts
+
+		we run the check corners for the box1 to box2
+		then we check box2 to box1 to get the smallest penetration 
+		if the pen is > 0 then we run the collision resolution
+		
 
 
 Box stuff
@@ -122,4 +147,4 @@ Resolutions
 
 	Rigidbody	
 		
-
+		

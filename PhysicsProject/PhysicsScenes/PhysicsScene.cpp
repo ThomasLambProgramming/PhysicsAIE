@@ -155,10 +155,16 @@ bool PhysicsScene::Plane2Box(PhysicsObject* objPlane , PhysicsObject* objBox)
 			{
 				// Get the position of the corners in world space
 				glm::vec2 pos = box->GetPosition() + x * box->GetLocalX() + y * box->GetLocalY();
+
+				//worldspace - plane point gives the distance vector from the plane to the corner point
+				//then it is projected by the planenormal to give the distance away.
+				//dot of (corner world space - plane point) and planeNormal
 				float distFromPlane = glm::dot(pos - planeOrigin, plane->GetNormal());
 
 				// This is the total velocity of the points in world space
+				//the amount to move in x and y for the corner being checked
 				glm::vec2 displacement = x * box->GetLocalX() + y * box->GetLocalY();
+
 				glm::vec2 pointVelocity = box->GetVelocity() + box->GetAngularVelocity() * glm::vec2(-displacement.y, displacement.x);
 
 				// This is the amount of the point velocity into the plane
@@ -202,10 +208,10 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* objSphere, PhysicsObject* objPlan
 		// - distancefromorigin it gives the location of the normal to the sphere
 		float sphereToPlane = glm::dot(sphere->GetPosition(), collisionNormal) - plane->GetDistance();
 		// - radius gives the amount it is intersecting as the above gets the current distance of the sphere to plane
+		
 		float intersection = sphere->GetRadius() - sphereToPlane;
 		//this sees if the sphere is going to be leaving the plane in the next frame of not
-		//using the dot if it is negative then it should be already leaving the plane 
-		//however as the spheres velocity is probs facing the plane then it will be negative and will need to be redirected.
+		//using the dot if it is negative then it is roughly in the opposite direction of the normal 
 		float velocityOutOfPlane = glm::dot(sphere->GetVelocity(), collisionNormal);
 
 		if (intersection > 0 && velocityOutOfPlane < 0)
