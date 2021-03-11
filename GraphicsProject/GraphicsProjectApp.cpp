@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "imgui.h"
+
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -29,6 +30,11 @@ bool GraphicsProjectApp::startup() {
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, (float)getWindowWidth() / 
 		(float)getWindowHeight(), 0.1f, 1000.0f);
 	//CreatePlanets();
+	
+	m_light.color = { 1,0.1f,1 };
+	m_ambientLight = { 0.25f,0.25f,0.25f };
+
+	
 	return LoadShaderAndMeshLogic();
 }
 
@@ -53,58 +59,19 @@ void GraphicsProjectApp::update(float deltaTime) {
 						vec3(-10, 0, -10 + i),
 						i == 10 ? white : black);
 	}
-
+	ImguiLogic();
+	float time = getTime();
+	
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 
 	
-	static float colorWheel[4] = {1,1,1,1};
-	static float bunnycolorWheel[4] = { 1,1,1,1 };
-	ImGui::Begin("Debug");
-	ImGui::ColorEdit4("Color", colorWheel);
-	ImGui::ColorEdit4("BunnyColor", bunnycolorWheel);
-
-	
-
-
-	
-	ImGui::End();
-	meshColor = { colorWheel[0],colorWheel[1],colorWheel[2],colorWheel[3] };
-	bunnyColor = { bunnycolorWheel[0], bunnycolorWheel[1],bunnycolorWheel[2],bunnycolorWheel[3] };
 	
 	aie::Input* input = aie::Input::getInstance();
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 }
-void GraphicsProjectApp::CreatePlanets()
-{
-	Planet* Mercury = new Planet(4.0f, 2.1f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Mercury);
-
-	Planet* Venus = new Planet(5.0f, 1.2f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Venus);
-
-	Planet* Earth = new Planet(6.5f, 3.3f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Earth);
-
-	Planet* Mars = new Planet(7.0f, 1.4f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Mars);
-
-	Planet* Jupiter = new Planet(8.5f, 0.5f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Jupiter);
-
-	Planet* Saturn = new Planet(9.0f, 0.6f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Saturn);
-
-	Planet* Uranus = new Planet(10.0f, 0.7f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Jupiter);
-
-	Planet* Neptune = new Planet(11.0f, 0.8f, 0.5f, glm::vec4(1, 1, 1, 1), glm::vec3(2, 2, 2));
-	Planets.push_back(Saturn);
-	
-}
-
 
 void GraphicsProjectApp::draw() {
 
@@ -132,17 +99,6 @@ bool GraphicsProjectApp::LoadShaderAndMeshLogic()
 		printf("yeah the fragment or vertex failed good job this didnt load");
 		return false;
 	}
-
-	//m_quadMesh.InitialiseQuad();
-	/*Mesh::Vertex vertices[6];
-	vertices[0].position = { -0.5f, 0.f, 0.5f, 1.0f };
-	vertices[1].position = { 0.5f, 0.f, 0.5f, 1.0f };
-	vertices[2].position = { -0.5f, 0.f,-0.5f, 1.0f };
-
-	vertices[3].position = { -0.5f, 0.f, -0.5f, 1.0f };
-	vertices[4].position = { 0.5f, 0.f, 0.5f, 1.0f };
-	vertices[5].position = { 0.5f, 0.f,-0.5f, 1.0f };*/
-
 	Mesh::Vertex vertices[4];
 	vertices[0].position = { -0.5f, 0.f, 0.5f, 1.0f };
 	vertices[1].position = { 0.5f, 0.f, 0.5f, 1.0f };
@@ -161,19 +117,8 @@ bool GraphicsProjectApp::LoadShaderAndMeshLogic()
 	};
 	
 #pragma  endregion 
-
 #pragma region  Bunny
-	m_bunnyShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/simple.vert");
-
-	//load the fragment shader from a file
-	m_bunnyShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/simple.frag");
-
-	if (!m_bunnyShader.link())
-	{
-		printf("yeah the fragment or vertex failed good job this didnt load");
-		return false;
-	}
-	if (m_bunnyMesh.load("./stanford/bunny.obj") == false)
+	if (m_bunnyMesh.load("./stanford/Bunny.obj") == false)
 	{
 		printf("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE bunny didnt load u idiot");
 		return false;
@@ -182,18 +127,65 @@ bool GraphicsProjectApp::LoadShaderAndMeshLogic()
 		0.5f,0,0,0,
 		0,0.5f,0,0,
 		0,0,0.5f,0,
-		0,0,0,1
+		3,0,-3,1
+	};
+#pragma endregion
+#pragma region Dragon
+	if (m_dragonMesh.load("./stanford/Dragon.obj") == false)
+	{
+		printf("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE dragon didnt load u idiot");
+		return false;
+	}
+	m_dragonTransform = {
+		0.5f,0,0,0,
+		0,0.5f,0,0,
+		0,0,0.5f,0,
+		3,0,3,1
+	};
+#pragma endregion
+#pragma region Lucy
+	if (m_lucyMesh.load("./stanford/Lucy.obj") == false)
+	{
+		printf("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE Lucy didnt load u idiot");
+		return false;
+	}
+	m_lucyTransform = {
+		0.5f,0,0,0,
+		0,0.5f,0,0,
+		0,0,0.5f,0,
+		-3,0,-3,1
+	};
+#pragma endregion
+#pragma region Budda
+	if (m_buddhaMesh.load("./stanford/Buddha.obj") == false)
+	{
+		printf("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE Buddha didnt load u idiot");
+		return false;
+	}
+	m_buddhaTransform = {
+		0.5f,0,0,0,
+		0,0.5f,0,0,
+		0,0,0.5f,0,
+		-3,0,3,1
 	};
 #pragma endregion 
+#pragma region Phong
 	
+	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
+	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
+	if (m_phongShader.link() == false)
+	{
+		printf("Phong no load link fail \n");
+		printf(m_phongShader.getLastError());
+		return false;
+	}
+#pragma endregion 
 	return true;
 }
 
 void GraphicsProjectApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::mat4 a_viewMatrix)
 {
 	auto pvm = a_projectionMatrix * a_viewMatrix * glm::mat4(0);
-	
-	
 #pragma  region Quad
 	//bind the shader 
 	m_simpleShader.bind();
@@ -202,18 +194,83 @@ void GraphicsProjectApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::
 	m_simpleShader.bindUniform("ProjectionViewModel",pvm);
 	m_simpleShader.bindUniform("color", meshColor);
 	m_quadMesh.Draw();
+	
 #pragma  endregion 
-
+#pragma region Phong
+	m_phongShader.bind();
+	//Bind the camera position
+	m_phongShader.bindUniform("CameraPosition", vec3(glm::inverse(a_viewMatrix)[3]));
+	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
+	m_phongShader.bindUniform("LightColor", m_light.color);
+	m_phongShader.bindUniform("LightDirection", m_light.direction);
+	
+#pragma endregion 
 #pragma region Bunny
-	m_bunnyShader.bind();
+	//bind the pvm
 	pvm = a_projectionMatrix * a_viewMatrix * m_bunnyTransform;
-	m_bunnyShader.bindUniform("ProjectionViewModel", pvm);
-	m_bunnyShader.bindUniform("color", bunnyColor);
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+	m_phongShader.bindUniform("AmbientColor", bunnyColor);
 
-	//draw bunny wow this tutorial took alot out of me, im so tired plz just vulkan take me away
-
+	//bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_bunnyTransform);
 	m_bunnyMesh.draw();
-#pragma  endregion 
+#pragma endregion
+#pragma region Dragon
+	//bind the pvm
+	pvm = a_projectionMatrix * a_viewMatrix * m_dragonTransform;
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+	m_phongShader.bindUniform("AmbientColor", dragonColor);
+
+	//bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_dragonTransform);
+	m_dragonMesh.draw();
+#pragma endregion
+#pragma region Lucy
+	//bind the pvm
+	pvm = a_projectionMatrix * a_viewMatrix * m_lucyTransform;
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+	m_phongShader.bindUniform("AmbientColor", LucyColor);
 	
+	//bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_lucyTransform);
+	m_lucyMesh.draw();
+#pragma endregion
+#pragma region Buddha
+	//bind the pvm
+	pvm = a_projectionMatrix * a_viewMatrix * m_buddhaTransform;
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+	m_phongShader.bindUniform("AmbientColor", BuddhaColor);
+
+	//bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_buddhaTransform);
+	m_buddhaMesh.draw();
+#pragma endregion 
+
+}
+
+void GraphicsProjectApp::ImguiLogic()
+{
 	
+	ImGui::Begin("Scene Light Settings");
+
+	//scene lighting options
+	ImGui::DragFloat3("Sunlight Direction", &m_light.direction[0], 0.1f, -1.0f, 1.0f);
+	ImGui::DragFloat3("Sunlight Color", &m_light.color[0], 0.1f, 0.0f, 2.0f);
+
+	//model colors
+	ImGui::DragFloat3("Bunny Color", &bunnyColor[0], 0.1f, 0, 2);
+	ImGui::DragFloat3("Dragon Color", &dragonColor[0], 0.1f, 0, 2);
+	ImGui::DragFloat3("Lucy Color", &LucyColor[0], 0.1f, 0, 2);
+	ImGui::DragFloat3("Buddha Color", &BuddhaColor[0], 0.1f, 0, 2);
+
+	//model transforms the 0000 is to give them basic values not the 29547y29874 they start with 
+	
+	ImGui::SliderFloat4("Bunny Transform",&imguiPos[0], -10, 10);
+	
+	if(ImGui::Button("Apply")) 
+		glm::translate(m_bunnyTransform, imguiPos);
+
+
+	
+	ImGui::End();
 }

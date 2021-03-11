@@ -25,29 +25,55 @@ public:
 	bool LoadShaderAndMeshLogic();
 
 	void DrawShaderAndMeshes(glm::mat4, glm::mat4);
-	
+	void ImguiLogic();
 
 protected:
 
-
 	//shader
 	aie::ShaderProgram m_simpleShader;
+	aie::ShaderProgram m_phongShader;
 	//
 	Mesh m_quadMesh;
 	glm::mat4 m_quadTransform;
-
-	glm::vec4 meshColor = {0,0,0,1};
-	glm::vec4 bunnyColor = { 1,1,1,1 };
-	std::vector<Planet*> Planets;
-
-
-	aie::ShaderProgram m_bunnyShader;
+	glm::vec4 meshColor = {1,0,0,1};
+	
+	//Objects below
+	glm::vec3 bunnyColor = { 1,1,1 };
+	glm::vec3 dragonColor = { 0,0,0};
+	glm::vec3 LucyColor = { 0,1,0 };
+	glm::vec3 BuddhaColor = { 0,0,1 };
+	
 	aie::OBJMesh m_bunnyMesh;
 	glm::mat4 m_bunnyTransform;
 
+	aie::OBJMesh m_dragonMesh;
+	glm::mat4 m_dragonTransform;
+
+	aie::OBJMesh m_lucyMesh;
+	glm::mat4 m_lucyTransform;
+
+	aie::OBJMesh m_buddhaMesh;
+	glm::mat4 m_buddhaTransform;
+
+	//this is for the modifying of the matrix
+	glm::vec3 imguiPos;
+
 	
+	struct Light
+	{
+		glm::vec3 direction;
+		glm::vec3 color;
+	};
 	
+	Light m_light;
+
+	//this is the intensity of each color in the scene as this applys to every model
+	//its a global kind of thing and controlls the rgb thing
+	//this seems to be the color of the ambient light 
+	glm::vec3 m_ambientLight;
+
 	// camera transforms
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
 };
+
