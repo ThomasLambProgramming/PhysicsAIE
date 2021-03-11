@@ -65,7 +65,7 @@ void GraphicsProjectApp::update(float deltaTime) {
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 
-	
+	m_camera.Update(deltaTime);
 	
 	aie::Input* input = aie::Input::getInstance();
 
@@ -77,12 +77,14 @@ void GraphicsProjectApp::draw() {
 
 	// wipe the screen to the background colour
 	clearScreen();
+	glm::mat4 projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), getWindowHeight());
+	glm::mat4 viewMatrix = m_camera.GetViewMatrix();
 
 	// update perspective based on screen size
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
-	DrawShaderAndMeshes(m_projectionMatrix, m_viewMatrix);
+	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
+	DrawShaderAndMeshes(projectionMatrix, viewMatrix);
 		
-	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+	Gizmos::draw(projectionMatrix * viewMatrix);
 }
 bool GraphicsProjectApp::LoadShaderAndMeshLogic()
 {
@@ -265,10 +267,13 @@ void GraphicsProjectApp::ImguiLogic()
 
 	//model transforms the 0000 is to give them basic values not the 29547y29874 they start with 
 	
-	ImGui::SliderFloat4("Bunny Transform",&imguiPos[0], -10, 10);
+	ImGui::SliderFloat3("Bunny Transform",&imguiPos[0], -10, 10);
 	
-	if(ImGui::Button("Apply")) 
-		glm::translate(m_bunnyTransform, imguiPos);
+	if(ImGui::Button("Apply"))
+	{
+		m_bunnyTransform *= resetMatrix;
+		m_bunnyTransform = glm::translate(m_bunnyTransform, imguiPos);
+	}
 
 
 	

@@ -6,7 +6,7 @@
 #include <vector>
 #include "Mesh.h"
 #include "OBJMesh.h"
-
+#include "Camera.h"
 
 class GraphicsProjectApp : public aie::Application {
 public:
@@ -28,7 +28,11 @@ public:
 	void ImguiLogic();
 
 protected:
+	//camera
+	Camera m_camera;
 
+
+	
 	//shader
 	aie::ShaderProgram m_simpleShader;
 	aie::ShaderProgram m_phongShader;
@@ -57,7 +61,13 @@ protected:
 
 	//this is for the modifying of the matrix
 	glm::vec3 imguiPos;
-
+	//this is to reset the position of the model to then be able to apply a position to it
+	glm::mat4 resetMatrix = {
+		1,1,1,1,
+		1,1,1,1,
+		1,1,1,1,
+		0,0,0,1
+	};
 	
 	struct Light
 	{

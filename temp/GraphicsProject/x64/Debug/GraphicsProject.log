@@ -1,4 +1,4 @@
-﻿  GraphicsProjectApp.cpp
-  main.cpp
-  Generating Code...
+﻿  Camera.cpp
+C:\Users\s200498\Desktop\PhysicsAIE\GraphicsProject\Camera.cpp(53,11): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\s200498\Desktop\PhysicsAIE\GraphicsProject\Camera.cpp(54,11): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   GraphicsProject.vcxproj -> C:\Users\s200498\Desktop\PhysicsAIE\temp\GraphicsProject\x64\Debug\GraphicsProject.exe
