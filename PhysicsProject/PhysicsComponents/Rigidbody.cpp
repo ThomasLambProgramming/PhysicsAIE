@@ -105,7 +105,7 @@ void Rigidbody::ResolveCollision(Rigidbody* a_otherActor, glm::vec2 a_contact, g
 
 	// Velocity of the contact point on this object
 	float cp_velocity1 = glm::dot(m_velocity, normal) - radius1 * m_angularVelocity;
-	// Velocity of contact point of the other object
+	// Velocity of the contact point of the other object
 	float cp_velocity2 = glm::dot(a_otherActor->GetVelocity(), normal) + radius2 * a_otherActor->m_angularVelocity;
 
 	// They are moving closer
@@ -117,8 +117,6 @@ void Rigidbody::ResolveCollision(Rigidbody* a_otherActor, glm::vec2 a_contact, g
 		float mass2 = 1.0f / (1.0f / a_otherActor->m_mass + (radius2 * radius2) / a_otherActor->GetMoment());
 
 		float elasticity = (a_otherActor->GetElasticity() + GetElasticity()) / 2; 
-
-
 
 		glm::vec2 impact = (1.0f + elasticity)*mass1*mass2 / (mass1 + mass2)*(cp_velocity1 - cp_velocity2)*normal;
 
@@ -139,14 +137,8 @@ void Rigidbody::ResolveCollision(Rigidbody* a_otherActor, glm::vec2 a_contact, g
 			TriggerEnter(a_otherActor);
 			a_otherActor->TriggerEnter(this);
 		}
-
-
-
 		if (a_pen > 0)
 		{
-		/*	ApplyForce(-impact, a_contact - m_position); 
-			a_otherActor->ApplyForce(impact, a_contact - a_otherActor->m_position);*/
-
 			PhysicsScene::ApplyContactForces(this, a_otherActor, normal, a_pen);
 		}
 	}
