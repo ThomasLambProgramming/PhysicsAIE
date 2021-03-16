@@ -15,10 +15,12 @@ public:
 	PhysicsProjectApp();
 	virtual ~PhysicsProjectApp();
 
+	void PhysicsProjectApp::ImGuiLoad();
 	virtual bool startup();
 	virtual void shutdown();
 
 	virtual void update(float deltaTime);
+	void WinCheck();
 	virtual void draw();
 
 	/*void DrawRect();
@@ -49,11 +51,11 @@ protected:
 
 	//same thing as player1red just to keep track of whos turn is whos without
 	//using alot of string checks
-	bool m_player1sTurn = false;
+	bool m_player1sTurn = true;
 	//check for if player ones color without using string
 	//if true or false we can tell what the other player is 
 	bool m_player1Red = false;
-	
+	bool m_firstBallSunk = false;
 	bool m_shooting = false;
 	//this is so the pool cue doesnt shoot quickly
 	bool m_hideQ = false;
@@ -65,6 +67,8 @@ protected:
 	bool m_setWhiteFrame = false;
 	int timer = 0;
 
+	bool turnStarted = false;
+
 	float m_shotPower = 0.0f;
 	
 	Sphere* m_whiteBall;
@@ -74,6 +78,7 @@ protected:
 	
 	bool clickedonce = false;
 	bool isMouseDown = false;
+
 
 	const float m_aspectRatio = 16.0f / 9.0f;
 	const float m_extents = 100.0f;

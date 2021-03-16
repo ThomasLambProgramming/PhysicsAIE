@@ -1,0 +1,2 @@
+C:\Users\Mcsor\Desktop\PhysicsAIE\temp\Bootstrap\Win32\Debug\Bootstrap.lib
+C:\Users\Mcsor\Desktop\PhysicsAIE\temp\Bootstrap\Win32\Debug\Bootstrap.pdb

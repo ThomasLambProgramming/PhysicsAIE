@@ -9,17 +9,16 @@
 #include <Gizmos.h>
 #include "Spring.h"
 #include "imgui.h"
+#include <string>
 
 PhysicsProjectApp::PhysicsProjectApp()
 {
 
 }
-
 PhysicsProjectApp::~PhysicsProjectApp()
 {
 
 }
-
 bool PhysicsProjectApp::startup()
 {
 	// Increases 2D line coun to maximise the number of objects we can draw.
@@ -28,9 +27,11 @@ bool PhysicsProjectApp::startup()
 	m_physicsScene = new PhysicsScene();
 	m_font = new aie::Font("../bin/font/consolas.ttf", 32);
 	memeTexture = new aie::Texture("../bin/textures/glen.png");
-	player1win = new aie::Texture("../bin/textures/Player1Win.png");
-	player2win = new aie::Texture("../bin/textures/Player2Win.png");
-
+	//player1win = new aie::Texture("../bin/textures/Player1Win.png");
+	//player2win = new aie::Texture("../bin/textures/Player2Win.png");
+	player1win = new aie::Texture("Player1Win.png");
+	player2win = new aie::Texture("Player2Win.png");
+	
 	Setup();
 	// Lower the valu, the more accurate the simulation will be;
 	// but it will increase the processing time required.
@@ -39,22 +40,70 @@ bool PhysicsProjectApp::startup()
 	aie::Application::setBackgroundColour(37.0f / 255.0f, 146.0f / 255.0f, 36.0f / 255.0f, 1.0f);
 	return true;
 }
-
 void PhysicsProjectApp::shutdown()
 {
 	delete m_font;
 	delete m_2dRenderer;
 }
+void PhysicsProjectApp::ImGuiLoad()
+{
+	ImGui::SetNextWindowSize(ImVec2(200, 60));
+	ImGui::SetNextWindowPos(ImVec2(200, -20));
+	ImGui::Begin("Game State");
+	if (m_player1sTurn)
+	{
+		std::string ballsSunk;
+		ImGui::Text("Player Ones turn");
+		if (m_firstBallSunk)
+		{
+			std::string sunkAmount;
+			if (m_player1Red)
+			{
+				sunkAmount = "Player 1 is red";
+			}
+			else
+			{
+				sunkAmount = "Player 1 is blue ";
+			}
+			ImGui::Text(sunkAmount.c_str());
+		}
 
+	}
+	else
+	{
+		std::string ballsSunk;
+		ImGui::Text("Player twos turn");
+		if (m_firstBallSunk)
+		{
+			std::string sunkAmount;
+			if (m_player1Red)
+			{
+				sunkAmount = "Player 2 is blue";
+			}				 
+			else			 
+			{				 
+				sunkAmount = "Player 2 is red";
+			}
+			ImGui::Text(sunkAmount.c_str());
+		}
+	}
+	ImGui::End();
+}
 void PhysicsProjectApp::update(float deltaTime)
 {
 	aie::Gizmos::clear();
+
 	m_physicsScene->Update(deltaTime);
-	if (!m_gameFinish)
+	if (m_gameFinish)
 	{
+		WinScreen();
+	}
+	else
+	{
+		aie::Gizmos::add2DLine(glm::vec2(-40, 50), glm::vec2(-40, -50), glm::vec4(0, 0, 0, 1));
 		//this is because lines overwrite everything and when the game is finished the rotations lines appear
 		m_physicsScene->Draw();
-
+		ImGuiLoad();
 		//this was to draw pool cue but i couldnt get the movement working
 		//get the mouse position
 		aie::Input* input = aie::Input::getInstance();
@@ -67,10 +116,7 @@ void PhysicsProjectApp::update(float deltaTime)
 
 		//mouse line to ball (cue)
 		static float lengthOf = 15;
-
 		static const float initalCueLength = 20.0f;
-
-
 
 		//if you swap the scaledmousepos and whiteballpos it makes the q on the opposite side to mouse. might be useful
 		glm::vec2 direction = scaledmousepos - m_whiteBall->GetPosition();
@@ -92,7 +138,15 @@ void PhysicsProjectApp::update(float deltaTime)
 
 			if (glm::length(sphere1->GetVelocity()) > 1.0f)
 				m_canShoot = false;
-
+		}
+		if (turnStarted && m_canShoot)
+		{
+			//this stops the game from switching player turns before calling the final you win screen.
+			if (!m_blackSunk)
+			{
+				m_player1sTurn = !m_player1sTurn;
+			}
+			turnStarted = false;
 		}
 
 		if (m_canShoot && !m_whiteSunk)
@@ -157,12 +211,12 @@ void PhysicsProjectApp::update(float deltaTime)
 				m_hideQ = false;
 			}
 		}
+		//this is all the shooting logic. NOTE:: CURRENTLY WORKS NO NEED FOR CHANGE
 		if (input->isMouseButtonDown(0) && m_shooting == false && m_holdingMouse == false && m_setWhiteFrame == false && m_canShoot == true && !m_whiteSunk)
 		{
 			m_shooting = true;
 			m_holdingMouse = true;
 		}
-
 		if (m_shooting)
 		{
 			if (m_holdingMouse)
@@ -188,129 +242,102 @@ void PhysicsProjectApp::update(float deltaTime)
 					m_shooting = false;
 					m_hideQ = true;
 					m_shotPower = 0.0f;
-					m_player1sTurn = !m_player1sTurn;
+					turnStarted = true;
+					
 				}
 			}
 		}
-		if (m_blackSunk == true)
+		//END NOTE
+
+		WinCheck();
+		if (input->isMouseButtonUp(0))
+			m_holdingMouse = false;
+		
+		
+		
+	}
+}
+void PhysicsProjectApp::WinCheck()
+{
+	if (m_blackSunk == true)
+	{
+		
+		
+		bool allVelocityCheck = true;
+		for (auto actor : m_physicsScene->GetActors())
+		{
+			Sphere* sphere1 = dynamic_cast<Sphere*>(actor);
+			if (sphere1 == nullptr)
+				continue;
+
+			if (glm::length(sphere1->GetVelocity()) > 1.0f)
+				allVelocityCheck = false;
+		}
+		if (allVelocityCheck)
 		{
 			m_gameFinish = true;
-			if (m_player1sTurn)
-				std::cout << "Player ones turn" << std::endl;
-			else
-				std::cout << "Player Twos turn" << std::endl;
-
-
-			bool allVelocityCheck = true;
-			for (auto actor : m_physicsScene->GetActors())
+		}
+		if (allVelocityCheck == true && m_whiteSunk == false)
+		{
+			//check for which player is what color
+			//check color amount (if not correct color then lost)
+			//if players color they win 
+			
+			if (m_player1sTurn == true)
 			{
-				Sphere* sphere1 = dynamic_cast<Sphere*>(actor);
-				if (sphere1 == nullptr)
-					continue;
-
-				if (glm::length(sphere1->GetVelocity()) > 1.0f)
-					allVelocityCheck = false;
-			}
-			if (allVelocityCheck == true && m_whiteSunk == true)
-			{
-				if (m_player1sTurn)
+				if (m_redSunk == 0 && m_blueSunk == 0)
 				{
-					m_WinMessage = "Player Two wins, Player One sunk the white with black";
+					player2won = true;
+					
+				}
+				if (m_player1Red && m_redSunk == 7)
+				{
+					player1won = true;
+					
+				}
+				if (!m_player1Red && m_blueSunk == 7)
+				{
+					player1won = true;
+					
+				}
+				if (m_player1Red && m_redSunk < 7)
+				{
+					player2won = true;
+					
+				}
+				if (!m_player1Red && m_blueSunk < 7)
+				{
+					player2won = true;
+					
+				}
+			}
+			if (m_player1sTurn == false)
+			{
+				if (m_redSunk == 0 && m_blueSunk == 0)
+				{
+					player1won = true;
+				}
+				if (!m_player1Red && m_redSunk == 7)
+				{
 					player2won = true;
 				}
-				else
+				if (m_player1Red && m_blueSunk == 7)
 				{
-					m_WinMessage = "Player One wins, Player Two sunk the white with black";
+					player2won = true;
+				}
+				if (m_player1Red && m_blueSunk < 7)
+				{
+					player1won = true;
+				}
+				if (!m_player1Red && m_blueSunk < 7)
+				{
 					player1won = true;
 				}
 			}
-			if (allVelocityCheck == true && m_whiteSunk == false)
-			{
-				//check for which player is what color
-				//check color amount (if not correct color then lost)
-				//if players color they win 
-				bool updatedThisFrame = false;
-				if (m_player1sTurn == true)
-				{
-					if (m_redSunk == 0 && m_blueSunk == 0)
-					{
-						player2won = true;
-						updatedThisFrame = true;
-					}
-					if (m_player1Red && m_redSunk == 7)
-					{
-						player1won = true;
-						updatedThisFrame = true;
-					}
-					if (!m_player1Red && m_blueSunk == 7)
-					{
-						player1won = true;
-						updatedThisFrame = true;
-					}
-					if (m_player1Red && m_redSunk < 7)
-					{
-						player2won = true;
-						updatedThisFrame = true;
-					}
-					if (!m_player1Red && m_blueSunk < 7)
-					{
-						player2won = true;
-						updatedThisFrame = true;
-					}
-				}
-				if (m_player1sTurn == false)
-				{
-					if (m_redSunk == 0 && m_blueSunk == 0)
-					{
-						player1won = true;
-						updatedThisFrame = true;
-					}
-					if (!m_player1Red && m_redSunk == 7)
-					{
-						player2won = true;
-						updatedThisFrame = true;
-					}
-					if (m_player1Red && m_blueSunk == 7)
-					{
-						player2won = true;
-						updatedThisFrame = true;
-					}
-					if (m_player1Red && m_blueSunk < 7)
-					{
-						player1won = true;
-						updatedThisFrame = true;
-					}
-					if (!m_player1Red && m_blueSunk < 7)
-					{
-						player1won = true;
-						updatedThisFrame = true;
-					}
-				}
 
-			}
-		}
-		if (input->isMouseButtonUp(0))
-			m_holdingMouse = false;
-		aie::Gizmos::add2DLine(glm::vec2(-40, 50), glm::vec2(-40, -50), glm::vec4(0, 0, 0, 1));
-		if (input->isKeyDown(aie::INPUT_KEY_RIGHT_BRACKET))
-			spawn = true;
-		if (input->isMouseButtonDown(2))
-		{
-			Reset();
-			Setup();
 		}
 	}
-	if (m_gameFinish)
-	{
-		if (player1won)
-			winTexture = player1win;
-		else
-			winTexture = player2win;
-		WinScreen();
-	}
-	
 }
-
 void PhysicsProjectApp::WinScreen()
 {	
 	ImGui::SetNextWindowPos(ImVec2(530, 400));
@@ -323,7 +350,6 @@ void PhysicsProjectApp::WinScreen()
 	}
 	ImGui::End();
 }
-
 void PhysicsProjectApp::Reset()
 {
 	delete m_physicsScene;
@@ -334,7 +360,7 @@ void PhysicsProjectApp::Reset()
 	m_canShoot = true;
 	player1won = false;
 	player2won = false;
-	m_player1sTurn = false;
+	m_player1sTurn = true;
 	m_player1Red = false;
 	m_shooting = false;
 	m_hideQ = false;
@@ -343,6 +369,10 @@ void PhysicsProjectApp::Reset()
 	clickedonce = false;
 	isMouseDown = false;
 	spawn = false;
+	turnStarted = false;
+	m_firstBallSunk = false;
+	m_redSunk = 0;
+	m_blueSunk = 0;
 }
 void PhysicsProjectApp::draw() {
 
@@ -351,19 +381,25 @@ void PhysicsProjectApp::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 	aie::Gizmos::draw2D(glm::ortho<float>(-m_extents, m_extents, -m_extents / m_aspectRatio, m_extents / m_aspectRatio, -1.0f, 1.0f));
+	
+
 	if (m_gameFinish)
-		m_2dRenderer->drawSprite(winTexture,1280 /2,720 /2, 1280, 720);
+	{
+		if (player1won)
+			m_2dRenderer->drawSprite(player1win,1280 /2,720 /2, 1280, 720);
+		else if (player2won)
+			m_2dRenderer->drawSprite(player2win, 1280 / 2, 720 / 2, 1280, 720);
+	}
 
 	if (spawn)
 		m_2dRenderer->drawSprite(memeTexture, 1280 / 2, 720 / 2, 1280, 720);
+
 	char fps[32];
 	sprintf_s(fps, 32, "fps: %i", getFPS());
 	
 	m_2dRenderer->drawText(m_font, fps, 0, 720 - 32);
 	m_2dRenderer->end();
 }
-
-
 void PhysicsProjectApp::Setup()
 {
 	//6 spheres for each pocket, 4 boxes for collisions
@@ -403,9 +439,27 @@ void PhysicsProjectApp::Setup()
 	{
 		Sphere* temp;
 		if (i >= 3)
-			temp = new Sphere(glm::vec2(-95 + (i - 3) * 95, -50), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+		{
+			if (i == 4)
+			{
+				temp = new Sphere(glm::vec2(-95 + (i - 3) * 95, -52), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+			}
+			else
+			{
+				temp = new Sphere(glm::vec2(-95 + (i - 3) * 95, -50), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+			}
+		}
 		else
-			temp = new Sphere(glm::vec2(-95 + i * 95, 50), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+		{
+			if (i == 1)
+			{
+				temp = new Sphere(glm::vec2(-95 + i * 95, 52), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+			}
+			else
+			{
+				temp = new Sphere(glm::vec2(-95 + i * 95, 50), glm::vec2(0, 0), 2, 6, glm::vec4(1, 0, 0, 1));
+			}
+		}
 
 		temp->SetKinematic(true);
 		temp->SetTrigger(true);
@@ -431,31 +485,53 @@ void PhysicsProjectApp::Setup()
 				glm::vec4 tempColor = pSphere->GetColour();
 				if (tempColor == glm::vec4(0, 0, 0, 1))
 				{
-					std::cout << "Black Sunk" << std::endl;
-
+					if (m_player1sTurn)
+					{
+						std::cout << "Player one has sunk the black" << std::endl;
+					}
+					else
+					{
+						std::cout << "Player two has sunk the black" << std::endl;
+					}
 					m_blackSunk = true;
 				}
 				else if (tempColor == glm::vec4(1, 0, 0, 1))
 				{
-					std::cout << "Red Sunk" << std::endl;
 					if (m_redSunk == 0 && m_blueSunk == 0)
 					{
-						if (!m_player1sTurn == true)
+						if (m_player1sTurn)
 							m_player1Red = true;
 						else
 							m_player1Red = false;
+						m_firstBallSunk = true;
+					}
+					if (m_player1sTurn)
+					{
+						std::cout << "Player one has sunk a red ball" << std::endl;
+					}
+					else
+					{
+						std::cout << "Player two has sunk a red ball" << std::endl;
 					}
 					m_redSunk++;
 				}
 				else
 				{
-					std::cout << "Blue Sunk" << std::endl;
 					if (m_redSunk == 0 && m_blueSunk == 0)
 					{
-						if (!m_player1sTurn == true)
-							m_player1Red = true;
-						else
+						if (m_player1sTurn)
 							m_player1Red = false;
+						else
+							m_player1Red = true;
+						m_firstBallSunk = true;
+					}
+					if (m_player1sTurn)
+					{
+						std::cout << "Player one has sunk a blue ball" << std::endl;
+					}
+					else
+					{
+						std::cout << "Player two has sunk a blue ball" << std::endl;
 					}
 					m_blueSunk++;
 				}
@@ -487,7 +563,9 @@ void PhysicsProjectApp::Setup()
 			{
 				color = glm::vec4(0, 0, 0, 1);
 				Sphere* temp = new Sphere(glm::vec2(30 + xOffset * i, yStart - yOffset * z), glm::vec2(0, 0), 25, 4, color);
-				temp->SetElasticity(1);
+				//debugging position
+				//Sphere* temp = new Sphere(glm::vec2(-80,-40), glm::vec2(0, 0), 25, 4, color);
+				temp->SetElasticity(0.8f);
 				m_physicsScene->AddActor(temp);
 				m_blackBall = temp;
 				m_blackBall->SetDebug(true);
@@ -510,7 +588,6 @@ void PhysicsProjectApp::Setup()
 
 
 }
-
 glm::vec2 PhysicsProjectApp::ScreenToWorld(glm::vec2 a_screenPos)
 {
 	glm::vec2 worldPos = a_screenPos;
